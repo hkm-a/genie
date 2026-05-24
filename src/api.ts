@@ -1,4 +1,7 @@
 import type { Scene } from './types';
+import { fillTemplate } from './template-engine';
+import { callLLM } from './llm-service';
+import { optimizePrompt } from './prompt-optimizer';
 
 export const getScenes = async (): Promise<Scene[]> => {
   return [
@@ -11,6 +14,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '学习教育',
       description: '输入一个概念，获得简单解释、类比、自我检查问题和教学挑战',
       tags: ['概念解释', '费曼技巧', '学习法', '教学'],
+      system_prompt: '你是一位精通费曼学习法的老师。擅长用最简单的语言解释复杂概念，通过类比让抽象变得具体。始终用 {learner_level} 能理解的语言表达。',
+      user_prompt_template: '请用费曼学习法解释以下概念：\n\n概念: {topic}\n目标受众: {learner_level}\n\n请按以下结构回答:\n1. 简单解释（一段话直接说清楚）\n2. 生动类比（一个真实世界的例子）\n3. 自我检查（3个问题检验是否真的懂了）\n4. 教学挑战（如何把这个概念教给别人）',
       variables: [
         {
           name: 'topic',
@@ -95,6 +100,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '学习教育',
       description: '输入知识点，生成选择题、判断题、简答题等测试题目',
       tags: ['测试', '考试', '习题', '教育'],
+      system_prompt: '你是一位经验丰富的教育测评专家。擅长根据知识点设计不同类型的测试题目，题目难度准确，答案正确，解析清晰易懂。',
+      user_prompt_template: '请根据以下要求生成测试题：\n\n知识点: {knowledge_point}\n题目类型: {question_types}\n难度等级: {difficulty}\n\n请确保：\n1. 题目准确反映该知识点的核心内容\n2. 难度符合要求\n3. 每题附正确答案和简要解析\n4. 语言简洁明了',
       variables: [
         {
           name: 'knowledge_point',
@@ -167,6 +174,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '内容创作',
       description: '输入主题，生成结构完整的博客文章',
       tags: ['博客', '文章', '写作', '内容创作'],
+      system_prompt: '你是一位专业的博客写手。擅长用 {tone} 的风格撰写结构清晰、观点鲜明的博客文章。内容要有深度但不枯燥，有趣但不浮夸。',
+      user_prompt_template: '请写一篇博客文章：\n\n主题: {topic}\n风格: {tone}\n长度: {length}\n\n文章需包含：\n1. 吸引人的标题\n2. 开篇引言（点明主题、引起兴趣）\n3. 2-3个主体段落（每个段落有核心观点和论据）\n4. 结尾总结（升华主题、引导互动）',
       variables: [
         {
           name: 'topic',
@@ -311,6 +320,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '商业办公',
       description: '输入邮件目的和内容，生成专业的商务邮件',
       tags: ['邮件', '商务', '沟通', '办公'],
+      system_prompt: '你是一位专业的商务邮件撰写专家。擅长根据邮件目的和收件人关系，撰写得体、清晰、有效的商务邮件。语气和措辞精准匹配收件人身份。',
+      user_prompt_template: '请撰写一封商务邮件：\n\n邮件目的: {email_purpose}\n收件人关系: {recipient_relation}\n核心内容: {key_points}\n\n要求：\n1. 主题行简洁明确\n2. 开篇得体问候\n3. 正文条理清晰\n4. 结尾礼貌收束\n5. 语气符合收件人关系',
       variables: [
         {
           name: 'email_purpose',
@@ -383,6 +394,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '商业办公',
       description: '输入分析对象，生成全面的SWOT分析报告',
       tags: ['SWOT', '战略分析', '商业', '规划'],
+      system_prompt: '你是一位资深战略分析师，精通SWOT分析框架。能够从内部（优势/劣势）和外部（机会/威胁）两个维度进行深入分析，提供切实可行的战略建议。',
+      user_prompt_template: '请对以下对象进行SWOT分析：\n\n分析对象: {subject}\n分析背景: {context}\n\n请按以下结构输出：\n\n## 优势 (Strengths)\n- 内部积极因素...\n\n## 劣势 (Weaknesses)\n- 内部消极因素...\n\n## 机会 (Opportunities)\n- 外部积极因素...\n\n## 威胁 (Threats)\n- 外部消极因素...\n\n## 战略建议\n基于SWOT分析提出3-5条可操作建议',
       variables: [
         {
           name: 'subject',
@@ -447,6 +460,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '编程开发',
       description: '为代码添加专业、清晰的注释',
       tags: ['编程', '代码', '注释', '开发'],
+      system_prompt: '你是一位资深的软件开发工程师，擅长编写清晰、规范的代码注释。懂得根据不同编程语言的最佳实践和注释风格来撰写注释。',
+      user_prompt_template: '请为以下代码添加 {comment_style} 注释：\n\n编程语言: {code_language}\n注释风格: {comment_style}\n\n请直接在代码中添加注释，保持注释风格统一，解释代码的功能、参数和返回值。',
       variables: [
         {
           name: 'code_language',
@@ -623,6 +638,8 @@ export const getScenes = async (): Promise<Scene[]> => {
       category_zh: '生活实用',
       description: '生成旅游行程规划的提纲',
       tags: ['旅游', '攻略', '行程', '规划'],
+      system_prompt: '你是一位经验丰富的旅行规划师，擅长根据目的地、天数和旅行风格制定个性化的行程方案。考虑交通、美食、景点和文化体验等全方位因素。',
+      user_prompt_template: '请制定一份旅游行程规划：\n\n目的地: {destination}\n行程天数: {trip_duration}\n旅行风格: {travel_style}\n\n请按以下结构规划：\n1. 目的地概览（最佳旅行季节、特色）\n2. 每日行程安排（每天的主题和主要活动）\n3. 美食推荐（当地必吃）\n4. 实用贴士（交通、住宿、预算）\n5. 备选方案（天气/时间变化的调整）',
       variables: [
         {
           name: 'destination',
@@ -3653,41 +3670,120 @@ export const getScenes = async (): Promise<Scene[]> => {
   ];
 };
 
-export const runScene = async (sceneId: string, variables: any): Promise<any> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+export const runScene = async (
+  sceneId: string,
+  variables: any,
+  apiKeys?: Array<{ provider: string; api_key: string }>,
+): Promise<any> => {
   const scenes = await getScenes();
   const scene = scenes.find(s => s.id === sceneId);
-  
+
   if (!scene) {
     throw new Error(`Scene not found: ${sceneId}`);
   }
-  
+
+  // If scene has prompt templates, call real LLM
+  if (scene.system_prompt && scene.user_prompt_template) {
+    // Try to get API keys from parameter or load from store
+    const keys = apiKeys || await (async () => {
+      try {
+        const { getApiKeys: load } = await import('./tauri-api');
+        return load();
+      } catch {
+        return [];
+      }
+    })();
+
+    if (!keys || keys.length === 0) {
+      throw new Error('API Key 未配置，请在设置中添加 API Key');
+    }
+
+    return runSceneWithLLM(scene, variables, keys);
+  }
+
+  // Fall back to mock data for scenes without templates
+  return runSceneMock(scene, variables);
+};
+
+async function runSceneWithLLM(
+  scene: Scene,
+  variables: Record<string, string>,
+  keys: Array<{ provider: string; api_key: string }>,
+): Promise<any> {
+  const supportedProviders = ['openai', 'deepseek', 'grok'];
+  const availableKeys = keys.filter(k => supportedProviders.includes(k.provider) && k.api_key?.trim());
+  let chosen = availableKeys.find(k => k.provider === 'openai')
+    || availableKeys.find(k => k.provider === 'deepseek')
+    || availableKeys.find(k => k.provider === 'grok');
+
+  if (!chosen) {
+    throw new Error('请配置 OpenAI、DeepSeek 或 Grok API Key 后再生成');
+  }
+
+  // Fill template with user variables
+  const systemPrompt = fillTemplate(scene.system_prompt!, variables);
+  const userPrompt = fillTemplate(scene.user_prompt_template!, variables);
+
+  const optimization = await optimizePrompt({
+    systemPrompt,
+    userPrompt,
+    sceneType: scene.type,
+    sceneName: scene.name_zh,
+    variables,
+    apiKey: chosen.api_key,
+    provider: chosen.provider,
+  });
+
+  const content = await callLLM({
+    systemPrompt: optimization.optimizedSystemPrompt,
+    userPrompt: optimization.optimizedUserPrompt,
+    apiKey: chosen.api_key,
+    provider: chosen.provider,
+  });
+
+  return {
+    success: true,
+    result: {
+      type: 'text',
+      content,
+    },
+    optimized_prompt: optimization.optimizedPrompt,
+    optimization: {
+      original_prompt: optimization.originalPrompt,
+      improvements: optimization.improvements,
+      model: optimization.model,
+    },
+  };
+}
+
+async function runSceneMock(scene: Scene, variables: any): any {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
   const variableLabels = scene.variables
     .map(v => `${v.label_zh}: ${variables[v.name] || '未填写'}`)
     .join('\n');
-  
+
   if (scene.type === 'image') {
     return {
       success: true,
       result: {
         type: 'image',
         content: `## 🎨 ${scene.name_zh}\n\n**场景描述**: ${scene.description}\n\n**输入变量**:\n${variableLabels}\n\n✨ 您的AI图像提示词已优化完成！`,
-        image_url: `https://picsum.photos/seed/${sceneId}-${Date.now()}/800/600`,
+        image_url: `https://picsum.photos/seed/${scene.id}-${Date.now()}/800/600`,
       },
-      optimized_prompt: `[优化后的${scene.type === 'image' ? '图像' : '文本'}提示词将被生成]`,
-    };
-  } else {
-    return {
-      success: true,
-      result: {
-        type: 'text',
-        content: `## 📝 ${scene.name_zh}\n\n**场景描述**: ${scene.description}\n\n**输入变量**:\n${variableLabels}\n\n✨ 您的AI文本提示词已优化完成！`,
-      },
-      optimized_prompt: `[优化后的${scene.type === 'image' ? '图像' : '文本'}提示词将被生成]`,
+      optimized_prompt: `[优化后的图像提示词将被生成]`,
     };
   }
-};
+
+  return {
+    success: true,
+    result: {
+      type: 'text',
+      content: `## 📝 ${scene.name_zh}\n\n**场景描述**: ${scene.description}\n\n**输入变量**:\n${variableLabels}\n\n✨ 您的AI文本提示词已优化完成！`,
+    },
+    optimized_prompt: `[优化后的文本提示词将被生成]`,
+  };
+}
 
 export const saveApiKey = async (provider: string, apiKey: string): Promise<void> => {
   localStorage.setItem(`genie_api_key_${provider}`, apiKey);

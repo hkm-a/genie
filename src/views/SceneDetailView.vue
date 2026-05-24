@@ -81,10 +81,25 @@
 
       <details class="optimized-prompt-section">
         <summary>查看优化后的提示词</summary>
+        <div v-if="optimization?.improvements?.length" class="optimization-improvements">
+          <h3>优化说明</h3>
+          <ul>
+            <li v-for="item in optimization.improvements" :key="item">{{ item }}</li>
+          </ul>
+        </div>
         <div class="optimized-prompt">
           <pre>{{ optimizedPrompt }}</pre>
         </div>
       </details>
+    </div>
+
+    <div v-if="errorMsg" class="error-section">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ errorMsg }}</span>
     </div>
   </div>
 </template>
@@ -93,6 +108,7 @@
 import { ref, reactive } from 'vue';
 import type { Scene } from '../types';
 import { runScene } from '../api';
+import { getApiKeys } from '../tauri-api';
 
 const props = defineProps<{
   scene: Scene;
@@ -106,6 +122,8 @@ const variables = reactive<Record<string, string>>({});
 const isGenerating = ref(false);
 const result = ref<any>(null);
 const optimizedPrompt = ref('');
+const optimization = ref<any>(null);
+const errorMsg = ref('');
 
 async function generateResult() {
   const missingRequired = props.scene.variables
@@ -119,16 +137,21 @@ async function generateResult() {
 
   isGenerating.value = true;
   result.value = null;
+  optimization.value = null;
+  errorMsg.value = '';
 
   try {
-    const response = await runScene(props.scene.id, variables);
+    const keys = await getApiKeys();
+    const response = await runScene(props.scene.id, variables, keys);
     if (response.success) {
       result.value = response.result;
       optimizedPrompt.value = response.optimized_prompt;
+      optimization.value = response.optimization ?? null;
     }
   } catch (e) {
     console.error('Generate failed:', e);
-    alert('生成失败，请检查 API Key 配置');
+    const msg = e instanceof Error ? e.message : '生成失败';
+    errorMsg.value = msg;
   } finally {
     isGenerating.value = false;
   }
@@ -370,6 +393,23 @@ async function generateResult() {
   color: var(--color-text);
 }
 
+.optimization-improvements {
+  margin: 1rem 0;
+  color: var(--color-text-secondary);
+}
+
+.optimization-improvements h3 {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.optimization-improvements ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.7;
+}
+
 .optimized-prompt {
   background: var(--color-bg);
   border-radius: var(--radius-md);
@@ -389,5 +429,23 @@ async function generateResult() {
   .detail-content {
     grid-template-columns: 1fr;
   }
+}
+
+.error-section {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-accent);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.error-section svg {
+  flex-shrink: 0;
 }
 </style>

@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { reactive, onMounted } from 'vue';
-import { saveApiKey, getApiKeys } from '../api';
+import { getApiKeys, storeApiKey } from '../tauri-api';
 
 const emit = defineEmits<{
   back: [];
@@ -101,23 +101,36 @@ onMounted(async () => {
     const savedKeys = await getApiKeys();
     savedKeys.forEach(item => {
       if (item.provider in apiKeys) {
-        (apiKeys as any)[item.provider] = item.apiKey;
+        (apiKeys as any)[item.provider] = item.api_key;
       }
     });
   } catch (e) {
     console.error('Load settings failed:', e);
+    // Fallback to api.ts if Tauri backend not available
+    const { getApiKeys: getLegacyKeys } = await import('../api');
+    const legacyKeys = await getLegacyKeys();
+    legacyKeys.forEach(item => {
+      if (item.provider in apiKeys) {
+        (apiKeys as any)[item.provider] = item.apiKey;
+      }
+    });
   }
 });
 
 async function saveSettings() {
   try {
     for (const [provider, key] of Object.entries(apiKeys)) {
-      await saveApiKey(provider, key);
+      await storeApiKey(provider, key);
     }
     alert('设置已保存');
   } catch (e) {
     console.error('Save failed:', e);
-    alert('保存失败');
+    // Fallback to api.ts if Tauri backend not available
+    const { saveApiKey: saveLegacyKey } = await import('../api');
+    for (const [provider, key] of Object.entries(apiKeys)) {
+      await saveLegacyKey(provider, key);
+    }
+    alert('设置已保存');
   }
 }
 </script>

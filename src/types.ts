@@ -16,6 +16,16 @@ export interface Scene {
     options?: string[];
     placeholder?: string;
   }>;
+  /** System prompt template with optional {variable} placeholders. When set, enables real LLM generation. */
+  system_prompt?: string;
+  /** User prompt template with {variable} placeholders matching scene.variables[].name. */
+  user_prompt_template?: string;
+}
+
+export interface PromptOptimizationMetadata {
+  original_prompt: string;
+  improvements: string[];
+  model?: string;
 }
 
 export interface LLMResult {
@@ -26,6 +36,7 @@ export interface LLMResult {
     image_url?: string;
   };
   optimized_prompt: string;
+  optimization?: PromptOptimizationMetadata;
 }
 
 export interface ApiKeyConfig {
