@@ -112,3 +112,8 @@ genie/
 - 补充模型与参数选择能力
 - 增加历史记录、收藏和导出
 - 完善桌面端打包与发布流程
+
+## 发布说明
+
+桌面便携版二进制**不**再纳入 git 仓库，请从 [GitHub Releases](https://github.com/hkm-a/genie/releases) 下载（本地构建：
+pm run tauri:build）。
