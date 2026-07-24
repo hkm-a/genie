@@ -39,3 +39,7 @@ pnpm-debug.log*
 # OS files
 Thumbs.db
 .DS_Store
+
+# 桌面发布产物不进库，走 GitHub Releases
+desktop/release/*.exe
+desktop/release/*.msi
