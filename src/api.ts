@@ -3685,14 +3685,7 @@ export const runScene = async (
   // If scene has prompt templates, call real LLM
   if (scene.system_prompt && scene.user_prompt_template) {
     // Try to get API keys from parameter or load from store
-    const keys = apiKeys || await (async () => {
-      try {
-        const { getApiKeys: load } = await import('./tauri-api');
-        return load();
-      } catch {
-        return [];
-      }
-    })();
+    const keys = apiKeys || await loadConfiguredApiKeys();
 
     if (!keys || keys.length === 0) {
       throw new Error('API Key 未配置，请在设置中添加 API Key');
@@ -3704,6 +3697,24 @@ export const runScene = async (
   // Fall back to mock data for scenes without templates
   return runSceneMock(scene, variables);
 };
+
+/** 优先读取桌面安全存储；网页端或桌面桥接不可用时回退到本地浏览器存储。 */
+async function loadConfiguredApiKeys(): Promise<Array<{ provider: string; api_key: string }>> {
+  try {
+    const { getApiKeys: load } = await import('./tauri-api');
+    const tauriKeys = await load();
+    if (Array.isArray(tauriKeys) && tauriKeys.length > 0) {
+      return tauriKeys.filter((item) => item.provider && item.api_key?.trim());
+    }
+  } catch {
+    // 网页端没有 Tauri 桥接时，继续读取 localStorage。
+  }
+
+  const browserKeys = await getApiKeys();
+  return browserKeys
+    .filter((item) => item.provider && item.apiKey.trim())
+    .map((item) => ({ provider: item.provider, api_key: item.apiKey }));
+}
 
 async function runSceneWithLLM(
   scene: Scene,

@@ -14,6 +14,7 @@ vi.mock('../prompt-optimizer', () => ({
 import { getScenes, runScene } from '../api';
 
 beforeEach(() => {
+  localStorage.clear();
   mockCallLLM.mockReset();
   mockOptimizePrompt.mockReset();
   mockOptimizePrompt.mockImplementation(({ systemPrompt, userPrompt }) => ({
@@ -103,6 +104,16 @@ describe('runScene', () => {
     await expect(
       runScene('feynman-learning', { topic: '量子纠缠', learner_level: '高中生' }, []),
     ).rejects.toThrow(/API Key/i);
+  });
+
+  it('should fall back to browser storage when Tauri key storage is unavailable', async () => {
+    localStorage.setItem('genie_api_key_openai', 'sk-browser');
+    mockCallLLM.mockResolvedValue('浏览器模式生成结果');
+
+    const result = await runScene('feynman-learning', { topic: '向量', learner_level: '高中生' });
+
+    expect(result.success).toBe(true);
+    expect(mockOptimizePrompt).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'sk-browser' }));
   });
 
   it('should ignore unsupported or empty API keys for template scenes', async () => {
