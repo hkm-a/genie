@@ -84,6 +84,7 @@
 
 <script setup lang="ts">
 import { reactive, onMounted } from 'vue';
+import { getApiKeys as getBrowserApiKeys, saveApiKey as saveBrowserApiKey } from '../api';
 import { getApiKeys, storeApiKey } from '../tauri-api';
 
 const emit = defineEmits<{
@@ -106,9 +107,7 @@ onMounted(async () => {
     });
   } catch (e) {
     console.error('Load settings failed:', e);
-    // Fallback to api.ts if Tauri backend not available
-    const { getApiKeys: getLegacyKeys } = await import('../api');
-    const legacyKeys = await getLegacyKeys();
+    const legacyKeys = await getBrowserApiKeys();
     legacyKeys.forEach(item => {
       if (item.provider in apiKeys) {
         (apiKeys as any)[item.provider] = item.apiKey;
@@ -125,10 +124,8 @@ async function saveSettings() {
     alert('设置已保存');
   } catch (e) {
     console.error('Save failed:', e);
-    // Fallback to api.ts if Tauri backend not available
-    const { saveApiKey: saveLegacyKey } = await import('../api');
     for (const [provider, key] of Object.entries(apiKeys)) {
-      await saveLegacyKey(provider, key);
+      await saveBrowserApiKey(provider, key);
     }
     alert('设置已保存');
   }
