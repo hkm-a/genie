@@ -2,6 +2,7 @@ import type { Scene } from './types';
 import { fillTemplate } from './template-engine';
 import { callLLM } from './llm-service';
 import { optimizePrompt } from './prompt-optimizer';
+import { getApiKeys as getTauriApiKeys } from './tauri-api';
 
 export const getScenes = async (): Promise<Scene[]> => {
   return [
@@ -3701,8 +3702,7 @@ export const runScene = async (
 /** 优先读取桌面安全存储；网页端或桌面桥接不可用时回退到本地浏览器存储。 */
 async function loadConfiguredApiKeys(): Promise<Array<{ provider: string; api_key: string }>> {
   try {
-    const { getApiKeys: load } = await import('./tauri-api');
-    const tauriKeys = await load();
+    const tauriKeys = await getTauriApiKeys();
     if (Array.isArray(tauriKeys) && tauriKeys.length > 0) {
       return tauriKeys.filter((item) => item.provider && item.api_key?.trim());
     }
